@@ -1,5 +1,5 @@
-var CACHE_STATIS_NAME = 'static-v8';
-var CACHE_DYNAMIC_NAME = 'dynamic-v2'
+var CACHE_STATIS_NAME = 'static-v9';
+var CACHE_DYNAMIC_NAME = 'dynamic-v3'
 
 self.addEventListener('install', function(event) {
   console.log('[Service Worker] Installing Service Worker ...', event);
@@ -40,30 +40,74 @@ self.addEventListener('activate', function(event) {
       }))
     })
   );
-  return self.clients.claim();
+
+  return self.clients.claim()
 });
 
  
 self.addEventListener("fetch", function (event) {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
+  var url = "https://httpbin.org/get"
+  console.log(event.request.url.indexOf(url))
+  if(event.request.url.indexOf(url) > -1) {
 
-      if (response) {
-        return response;
-      } else {
-        return fetch(event.request).then(function(res) {
-          return caches.open(CACHE_DYNAMIC_NAME)
-          .then(function(cache) {
-            cache.put(event.request.url,res.clone())
-            return res;
+    event.respondWith(
+     caches.open(CACHE_DYNAMIC_NAME)
+      .then(function(cache) {
+        return fetch(event.request)
+          .then(function(res) {
+            cache.put(event.request,res.clone());
+            return res
           })
-        });
-      }
-    }).catch(function(err) {
-      return caches.open(CACHE_STATIS_NAME)
-        .then(function(cache) {
-         return  cache.match('/offline.html');
-        })
-    })
-  );
+      })
+    );
+    
+  }else{
+    event.respondWith(
+      caches.match(event.request).then((response) => {
+  
+        if (response) {
+          return response;
+        } else {
+          return fetch(event.request).then(function(res) {
+            return caches.open(CACHE_DYNAMIC_NAME)
+            .then(function(cache) {
+              cache.put(event.request.url,res.clone())
+              return res;
+            })
+          });
+        }
+      }).catch(function(err) {
+        return caches.open(CACHE_STATIS_NAME)
+          .then(function(cache) {
+           if(event.request.indexOf('/help')) {
+             return  cache.match('/offline.html');
+
+           }
+          })
+      })
+    );
+  }
 });
+// self.addEventListener("fetch", function (event) {
+//   event.respondWith(
+//     caches.match(event.request).then((response) => {
+
+//       if (response) {
+//         return response;
+//       } else {
+//         return fetch(event.request).then(function(res) {
+//           return caches.open(CACHE_DYNAMIC_NAME)
+//           .then(function(cache) {
+//             cache.put(event.request.url,res.clone())
+//             return res;
+//           })
+//         });
+//       }
+//     }).catch(function(err) {
+//       return caches.open(CACHE_STATIS_NAME)
+//         .then(function(cache) {
+//          return  cache.match('/offline.html');
+//         })
+//     })
+//   );
+// });
