@@ -17,6 +17,18 @@ var STATIC_FILE = [
         'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css'
 
 ]
+
+function trimCache(cacheName,maxItems) {
+  caches.open(cacheName)
+    .then(function(cache) {
+      return cache.keys().then(function(keys) {
+        if(keys.length > maxItems) {
+          cache.delete(keys[0]).then(trimCache(cacheName,maxItems))
+        }
+      });
+    })
+   
+}
 self.addEventListener('install', function(event) {
   console.log('[Service Worker] Installing Service Worker ...', event);
   event.waitUntil(
@@ -54,7 +66,7 @@ function isInArray(string, array) {
   return array.indexOf(cachePath) > -1;
 }
 self.addEventListener("fetch", function (event) {
-  var url = "https://httpbin.org/get"
+  var url = "https://pwgram-9b0dc-default-rtdb.asia-southeast1.firebasedatabase.app/posts.json"
   console.log(event.request.url.indexOf(url))
   if(event.request.url.indexOf(url) > -1) {
 
@@ -63,6 +75,7 @@ self.addEventListener("fetch", function (event) {
       .then(function(cache) {
         return fetch(event.request)
           .then(function(res) {
+            trimCache(CACHE_DYNAMIC_NAME,3)
             cache.put(event.request,res.clone());
             return res
           })
@@ -84,6 +97,7 @@ self.addEventListener("fetch", function (event) {
           return fetch(event.request).then(function(res) {
             return caches.open(CACHE_DYNAMIC_NAME)
             .then(function(cache) {
+              trimCache(CACHE_DYNAMIC_NAME,3)
               cache.put(event.request.url,res.clone())
               return res;
             })
