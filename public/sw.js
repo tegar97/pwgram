@@ -61,7 +61,12 @@ self.addEventListener("fetch", function (event) {
       })
     );
     
-  }else{
+  }else if(new RegExp('\\b' + STATIC_FILES.join('\\b|\\b') + '\\b').test(event.request.url)) {
+    event.respondWith(
+      caches.match(event.request)
+    )
+  }
+  else{
     event.respondWith(
       caches.match(event.request).then((response) => {
   
