@@ -1,13 +1,7 @@
 var CACHE_STATIS_NAME = 'static-v9';
 var CACHE_DYNAMIC_NAME = 'dynamic-v3'
-
-self.addEventListener('install', function(event) {
-  console.log('[Service Worker] Installing Service Worker ...', event);
-  event.waitUntil(
-    caches.open(CACHE_STATIS_NAME).then(function(cache) {
-      console.log('[Service Worker] precachin app shell');
-      cache.addAll([
-        '/',
+var STATIC_FILE = [
+  '/',
         '/index.html',
         '/offline.html',
         '/src/js/app.js',
@@ -22,7 +16,13 @@ self.addEventListener('install', function(event) {
         'https://fonts.googleapis.com/icon?family=Material+Icons',
         'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css'
 
-      ])
+]
+self.addEventListener('install', function(event) {
+  console.log('[Service Worker] Installing Service Worker ...', event);
+  event.waitUntil(
+    caches.open(CACHE_STATIS_NAME).then(function(cache) {
+      console.log('[Service Worker] precachin app shell');
+      cache.addAll(STATIC_FILE)
 
     })
   )
@@ -43,8 +43,16 @@ self.addEventListener('activate', function(event) {
 
   return self.clients.claim()
 });
-
- 
+function isInArray(string, array) {
+  var cachePath;
+  if (string.indexOf(self.origin) === 0) { // request targets domain where we serve the page from (i.e. NOT a CDN)
+    console.log('matched ', string);
+    cachePath = string.substring(self.origin.length); // take the part of the URL AFTER the domain (e.g. after localhost:8080)
+  } else {
+    cachePath = string; // store the full request (for CDNs)
+  }
+  return array.indexOf(cachePath) > -1;
+}
 self.addEventListener("fetch", function (event) {
   var url = "https://httpbin.org/get"
   console.log(event.request.url.indexOf(url))
@@ -61,7 +69,7 @@ self.addEventListener("fetch", function (event) {
       })
     );
     
-  }else if(new RegExp('\\b' + STATIC_FILES.join('\\b|\\b') + '\\b').test(event.request.url)) {
+  }else if(isInArray(event.request.url,STATIC_FILE)) {
     event.respondWith(
       caches.match(event.request)
     )
@@ -84,7 +92,7 @@ self.addEventListener("fetch", function (event) {
       }).catch(function(err) {
         return caches.open(CACHE_STATIS_NAME)
           .then(function(cache) {
-           if(event.request.indexOf('/help')) {
+           if(event.request.headers.get('accept').includes('text/html')) {
              return  cache.match('/offline.html');
 
            }
