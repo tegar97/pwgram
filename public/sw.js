@@ -1,4 +1,7 @@
-var CACHE_STATIS_NAME = 'static-v9';
+importScripts('/src/js/idb.js');
+importScripts('/src/js/util.js');
+
+var CACHE_STATIS_NAME = 'static-v10';
 var CACHE_DYNAMIC_NAME = 'dynamic-v3'
 var STATIC_FILE = [
   '/',
@@ -7,6 +10,7 @@ var STATIC_FILE = [
         '/src/js/app.js',
         '/src/js/feed.js',
         '/src/js/promise.js',
+        '/src/js/idb.js',
         '/src/js/fetch.js',
         '/src/js/material.min.js',
         '/src/css/app.css',
@@ -17,6 +21,7 @@ var STATIC_FILE = [
         'https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css'
 
 ]
+
 
 function trimCache(cacheName,maxItems) {
   caches.open(cacheName)
@@ -71,14 +76,14 @@ self.addEventListener("fetch", function (event) {
   if(event.request.url.indexOf(url) > -1) {
 
     event.respondWith(
-     caches.open(CACHE_DYNAMIC_NAME)
-      .then(function(cache) {
-        return fetch(event.request)
-          .then(function(res) {
-            trimCache(CACHE_DYNAMIC_NAME,3)
-            cache.put(event.request,res.clone());
-            return res
-          })
+      fetch(event.request).then(function(res) {
+        var  clonedRes = res.clone();
+        clonedRes.json().then(function(data) {
+          for(var key in data) {
+            writeData('posts',data[key])
+          }
+        })
+        return res
       })
     );
     
