@@ -123,7 +123,20 @@ if ('indexedDB' in window) {
     });
 }
 
-
+function sendData(){
+  fetch('https://pwgram-9b0dc-default-rtdb.asia-southeast1.firebasedatabase.app/posts.json',{
+    method: 'POST',
+    body: JSON.stringify({
+      id: new Date().toISOString(),
+      title : titleInput.value,
+      location : locationInput.value,
+      image : 'xxx'
+    })
+  }).then(function(res) {
+    console.log('Sent Data',res)
+    updateUI();
+  })
+}
 form.addEventListener('submit',function(event) {
   event.preventDefault();
   if(titleInput.value.trim() === '' || locationInput.value.trim() === '' ){
@@ -136,8 +149,21 @@ form.addEventListener('submit',function(event) {
   if('serviceWorker' in navigator && 'SyncManager' in window) {
     navigator.serviceWorker.ready
       .then(function(sw) {
-        
+        var posts = {
+          id: new Date().toISOString(),
+          title : titleInput.value,
+          location: locationInput.value,
+        }
+        writeData('sync-posts' , posts).then(function() {
+          return sw.sync.register('sync-new-post');
+        }).then(function() {
+          var snackbarContainer = document.querySelector('#confirmation-toast');
+          var data = {message: 'Your Post was saved for syncing'};
+          snackbarContainer.MaterialSnackbar.showSnackbar(data);
+        })
       })
+  }else{
+
   }
   console.log('aaaa')
 })

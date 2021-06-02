@@ -1,5 +1,5 @@
 importScripts('/src/js/idb.js');
-importScripts('/src/js/utility.js');
+importScripts('/src/js/util.js');
 
 var CACHE_STATIC_NAME = 'static-v23';
 var CACHE_DYNAMIC_NAME = 'dynamic-v2';
@@ -180,3 +180,36 @@ self.addEventListener('fetch', function (event) {
 //     fetch(event.request)
 //   );
 // });
+
+
+self.addEventListener('sync',function(event) {
+  console.log('[Serivce Worker] Background Syncing',event)
+
+  if(event.tag === 'sync-new-post') {
+    console.log('[Service Worker ] Syncing new posts');
+    event.waitUntil(
+      readAllData('sync-posts')
+        .then(function(data){
+          for(var dt of data) {
+            fetch('https://pwgram-9b0dc-default-rtdb.asia-southeast1.firebasedatabase.app/posts.json',{
+              method: 'POST',
+              body: JSON.stringify({
+                id: dt.id,
+                title : dt.title,
+                location : dt.location,
+                image : 'xxx'
+              })
+            }).then(function(res) {
+              console.log('Sent Data',res)
+              if(res.ok) {
+                deleteItemFromData('sync-post',dt.id)
+              }
+            }).catch(function(err) {
+              console.log('Error while sending data',err);
+            })
+
+          }
+        })
+    );
+  }
+})
