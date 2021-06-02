@@ -197,12 +197,12 @@ self.addEventListener('sync',function(event) {
                 id: dt.id,
                 title : dt.title,
                 location : dt.location,
-                image : 'xxx'
+                image :"https://firebasestorage.googleapis.com/v0/b/pwgram-9b0dc.appspot.com/o/1%20Foto%20Utama-min.jpg?alt=media&token=9509a753-9a9b-450a-8234-672df4b97547"
               })
             }).then(function(res) {
               console.log('Sent Data',res)
               if(res.ok) {
-                deleteItemFromData('sync-post',dt.id)
+                deleteItemFromData('sync-posts',dt.id)
               }
             }).catch(function(err) {
               console.log('Error while sending data',err);
